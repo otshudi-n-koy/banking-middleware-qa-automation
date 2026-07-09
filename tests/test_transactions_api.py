@@ -77,3 +77,26 @@ def test_amount_boundary_values(client, amount, tx_type, expected_status):
         json={"account_id": "ACC-0001", "amount": amount, "type": tx_type},
     )
     assert resp.status_code == expected_status
+
+def test_get_transaction_nominal(client):
+    create = client.post(
+        "/transactions",
+        json={"account_id": "ACC-0001", "amount": 75.0, "type": "DEBIT", "label": "Test lecture"},
+    )
+    tx_id = create.json()["id"]
+
+    resp = client.get(f"/transactions/{tx_id}")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["id"] == tx_id
+    assert body["amount"] == 75.0
+    assert body["status"] == "SETTLED"
+
+
+def test_get_unknown_transaction_returns_404(client):
+    resp = client.get("/transactions/TX-DOESNOTEXIST")
+    assert resp.status_code == 404
+
+def test_get_balance_unknown_account_returns_404(client):
+    resp = client.get("/accounts/ACC-9999/balance")
+    assert resp.status_code == 404
